@@ -1,0 +1,11 @@
+# .dockerignore
+.git
+.vscode
+dist
+node_modules
+Dockerfile
+Dockerfile.dev
+Dockerfile.prod
+#C, CPP 파일 빌드할 때 생기는 파일들 
+Makefile 
+README.md
