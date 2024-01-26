@@ -1,25 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from './schemas/user.schema';
-import { Model } from 'mongoose';
-import { CreateUserDto } from './dto/create-user.dto';
-import { ServiceException } from 'common/serviceException';
+import { userAgreeHistoryDtos, userBalanceHistoryDtos } from './data/user.data';
+import { UserAgreeHistory, UserBalanceHistory } from './dto/user.dto';
+// import { ServiceException } from 'common/serviceException';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor() {}
 
-  async findAll(): Promise<User[]> {
-    const userList = await this.userModel.find().exec();
-    // throw new SyntaxError('문법 에러');
-    throw new ServiceException(400, 'adslkfjladsf');
-    return userList;
+  async getUserAgreeHistory(userId: string): Promise<UserAgreeHistory[]> {
+    // 특정 사용자의 동의 이력 가져오기
+    const agreeInfo = await userAgreeHistoryDtos.filter(
+      (history) => history.userId === userId,
+    );
+
+    console.log('agreeInfo: ', agreeInfo);
+    return agreeInfo;
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const createdUser = new this.userModel(createUserDto);
-    await createdUser.save();
+  async getUserBalance(userId: string): Promise<UserBalanceHistory[]> {
+    // 특정 사용자의 잔액 정보 가져오기
+    const balanceInfo = await userBalanceHistoryDtos.filter(
+      (balance) => balance.userId === userId,
+    );
 
-    return createdUser;
+    console.log('balanceInfo: ', balanceInfo);
+    return balanceInfo;
   }
 }

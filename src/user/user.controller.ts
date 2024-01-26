@@ -1,29 +1,33 @@
 import {
-  BadRequestException,
-  Body,
   Controller,
   Get,
   HttpException,
   InternalServerErrorException,
-  Post,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { User } from './schemas/user.schema';
+import { UserAgreeHistory, UserBalanceHistory } from './dto/user.dto';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+// import { userAgreeHistoryDtos, userBalanceHistoryDtos } from './data/user.data';
 import { ServiceException } from 'common/serviceException';
 
 @ApiTags('user')
-@Controller('user')
+@Controller({ path: 'user', version: '1' })
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Get()
+  @Get('agreements')
   @ApiOperation({ summary: 'Find All Users' })
-  @ApiOkResponse({ description: 'Find All Users', type: User, isArray: true })
-  async findAll(): Promise<User[]> {
+  @ApiOkResponse({
+    description: 'Find All Users',
+    type: UserAgreeHistory,
+    isArray: true,
+  })
+  async getUserAgreeHistory(
+    @Query('userId') userId: string,
+  ): Promise<UserAgreeHistory[]> {
     try {
-      const test = await this.userService.findAll();
+      const test = await this.userService.getUserAgreeHistory(userId);
       return test;
     } catch (error) {
       console.log('error in users find: ', error.message);
@@ -35,20 +39,26 @@ export class UserController {
     }
   }
 
-  @Post('create')
-  @ApiBody({ type: CreateUserDto, description: 'Create User' })
-  @ApiOperation({ summary: 'Create User' })
-  @ApiOkResponse({ description: 'Create User', type: User, isArray: false })
-  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+  @Get('agreements2')
+  @ApiOperation({ summary: 'Find All Users' })
+  @ApiOkResponse({
+    description: 'Find All Users',
+    type: UserBalanceHistory,
+    isArray: true,
+  })
+  async getUserBalance(
+    @Query('userId') userId: string,
+  ): Promise<UserBalanceHistory[]> {
     try {
-      if (!createUserDto || !createUserDto.address) {
-        throw new BadRequestException('Invalid input');
-      }
-      return await this.userService.create(createUserDto);
+      const test = await this.userService.getUserBalance(userId);
+      return test;
     } catch (error) {
-      console.log('error in users create: ', error.message);
-      if (error.name === 'BadRequestException')
-        throw new BadRequestException('Invalid input');
+      console.log('error in users find: ', error.message);
+      if (!(error instanceof ServiceException)) {
+        throw new InternalServerErrorException(error.message);
+      } else {
+        throw new HttpException(error.message, error.errorCode);
+      }
     }
   }
 }
