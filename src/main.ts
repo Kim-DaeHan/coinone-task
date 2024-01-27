@@ -9,20 +9,20 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
-    .setTitle('PXB')
-    .setDescription('The PXB API description')
+    .setTitle('CoinOne')
+    .setDescription('The CoinOne API description')
     .setVersion('1.0')
-    .addTag('pxb')
+    .addTag('CoinOne')
     .build();
-
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
 
   app.enableCors();
 
   app.enableVersioning({
     type: VersioningType.URI,
   });
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, document);
 
   await app.listen(3000);
 

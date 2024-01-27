@@ -4,9 +4,11 @@ import {
   HttpException,
   InternalServerErrorException,
   Query,
+  ValidationPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { UserAgreeHistory, UserBalanceHistory } from './dto/user.dto';
+import { ResponseDto } from './dto/user.response.dto';
+import { RequestDto } from './dto/user.request.dto';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 // import { userAgreeHistoryDtos, userBalanceHistoryDtos } from './data/user.data';
 import { ServiceException } from 'common/serviceException';
@@ -20,37 +22,15 @@ export class UserController {
   @ApiOperation({ summary: 'Find All Users' })
   @ApiOkResponse({
     description: 'Find All Users',
-    type: UserAgreeHistory,
+    type: ResponseDto,
     isArray: true,
   })
   async getUserAgreeHistory(
-    @Query('userId') userId: string,
-  ): Promise<UserAgreeHistory[]> {
+    // transform: true => 자동으로 타입 변환, 초기 값 정상 작동
+    @Query(new ValidationPipe({ transform: true })) requestDto: RequestDto,
+  ): Promise<ResponseDto> {
     try {
-      const test = await this.userService.getUserAgreeHistory(userId);
-      return test;
-    } catch (error) {
-      console.log('error in users find: ', error.message);
-      if (!(error instanceof ServiceException)) {
-        throw new InternalServerErrorException(error.message);
-      } else {
-        throw new HttpException(error.message, error.errorCode);
-      }
-    }
-  }
-
-  @Get('agreements2')
-  @ApiOperation({ summary: 'Find All Users' })
-  @ApiOkResponse({
-    description: 'Find All Users',
-    type: UserBalanceHistory,
-    isArray: true,
-  })
-  async getUserBalance(
-    @Query('userId') userId: string,
-  ): Promise<UserBalanceHistory[]> {
-    try {
-      const test = await this.userService.getUserBalance(userId);
+      const test = await this.userService.getUserAgreeHistory(requestDto);
       return test;
     } catch (error) {
       console.log('error in users find: ', error.message);
