@@ -1,5 +1,5 @@
 # 기본 이미지 선택
-FROM node:20.7.0
+FROM node:20.11.0
 
 # 작업 디렉토리 설정
 WORKDIR /app

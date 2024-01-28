@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { userAgreeHistoryDtos, userBalanceHistoryDtos } from './data/user.data';
 import { RequestDto } from './dto/user.request.dto';
 import { ResponseDto } from './dto/user.response.dto';
-// import { ServiceException } from 'common/serviceException';
+import { ServiceException } from 'common/serviceException';
 
 @Injectable()
 export class UserService {
@@ -10,11 +10,17 @@ export class UserService {
 
   async getUserAgreeHistory(requestDto: RequestDto): Promise<ResponseDto> {
     const { timestamp, balance, userId, limit, offset } = requestDto;
-    console.log('timestamp', timestamp);
-    console.log('balance', balance);
-    console.log('userId', userId);
-    console.log('limit', limit);
-    console.log('offset', offset);
+
+    if (!timestamp || !balance || isNaN(limit) || isNaN(offset)) {
+      throw new ServiceException(400, 'Invalid input parameters');
+    }
+
+    if (!userAgreeHistoryDtos.length || !userBalanceHistoryDtos.length) {
+      throw new ServiceException(
+        500,
+        'Data not available or in the wrong format',
+      );
+    }
 
     let userArr = [];
 
@@ -22,10 +28,8 @@ export class UserService {
       userArr = userId.split(',');
     }
 
-    console.log('userArr: ', userArr);
-
     // userId 중 가장 최신 데이터만 존재하도록 필터(중복 제거)
-    const filteredUsers = userAgreeHistoryDtos.reduce((acc, current) => {
+    const uniqueUsersHistory = userAgreeHistoryDtos.reduce((acc, current) => {
       // 쿼리 스트링으로 넘어온 userId가없으면 전체, 있으면 해당 user
       if (userArr.length === 0 || userArr.includes(current.userId)) {
         const existingUser = acc.find((user) => user.userId === current.userId);
@@ -42,38 +46,56 @@ export class UserService {
     }, []);
 
     // 중복제거된 user 데이터들 중 쿼리스트링으로 넘어온 timestamp 보다 이후에 동의를 한 데이터
-    const filteredUsersAgree = filteredUsers.filter(
-      (agreement) => agreement.createdAt > timestamp && agreement.isAgree,
+    const filteredUsersAgree = uniqueUsersHistory.filter(
+      (item) => item.createdAt >= timestamp && item.isAgree,
     );
 
-    const result = filteredUsers.filter((agreement) => {
-      const correspondingBalance = userBalanceHistoryDtos.find(
-        (balance) =>
-          balance.userId === agreement.userId &&
-          balance.createdAt === timestamp,
-      );
-      return (
-        correspondingBalance &&
-        parseInt(correspondingBalance.balance) >= parseInt(balance)
-      );
-    });
+    const filteredUserBalance = userBalanceHistoryDtos.filter(
+      (item) =>
+        item.createdAt <= timestamp &&
+        parseInt(item.balance) >= parseInt(balance),
+    );
 
-    console.log('filteredUsers:', filteredUsers);
-    console.log('filteredUsersAgree:', filteredUsersAgree);
-    console.log('result:', result);
+    const uniqueUsersBalance = filteredUserBalance.reduce((acc, current) => {
+      // 쿼리 스트링으로 넘어온 userId가없으면 전체, 있으면 해당 user
+      if (userArr.length === 0 || userArr.includes(current.userId)) {
+        const existingUser = acc.find((user) => user.userId === current.userId);
 
-    const test = {
-      count: 1,
-      rows: [
-        {
-          userId: 'USER_G',
-          isAgree: true,
-          balance: '198800',
-          createdAt: 1704067200,
-        },
-      ],
+        if (!existingUser) {
+          acc.push(current);
+        } else if (current.createdAt > existingUser.createdAt) {
+          acc = acc.filter((user) => user.userId !== current.userId);
+          acc.push(current);
+        }
+      }
+
+      return acc;
+    }, []);
+
+    const rows = filteredUsersAgree
+      .map((item) => {
+        const userBalance = uniqueUsersBalance.find(
+          (u) => u.userId === item.userId,
+        );
+
+        return userBalance
+          ? {
+              userId: item.userId,
+              isAgree: item.isAgree,
+              balance: userBalance.balance,
+              createdAt: item.createdAt,
+            }
+          : null;
+      })
+      .filter((item) => item !== null);
+
+    const modifiedRows = rows.slice(offset, offset + limit);
+
+    const response = {
+      count: modifiedRows.length,
+      rows: modifiedRows,
     };
 
-    return test;
+    return response;
   }
 }
