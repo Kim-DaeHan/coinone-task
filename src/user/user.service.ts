@@ -24,7 +24,9 @@ export class UserService {
 
     console.log('userArr: ', userArr);
 
+    // userId 중 가장 최신 데이터만 존재하도록 필터(중복 제거)
     const filteredUsers = userAgreeHistoryDtos.reduce((acc, current) => {
+      // 쿼리 스트링으로 넘어온 userId가없으면 전체, 있으면 해당 user
       if (userArr.length === 0 || userArr.includes(current.userId)) {
         const existingUser = acc.find((user) => user.userId === current.userId);
 
@@ -39,6 +41,7 @@ export class UserService {
       return acc;
     }, []);
 
+    // 중복제거된 user 데이터들 중 쿼리스트링으로 넘어온 timestamp 보다 이후에 동의를 한 데이터
     const filteredUsersAgree = filteredUsers.filter(
       (agreement) => agreement.createdAt > timestamp && agreement.isAgree,
     );
