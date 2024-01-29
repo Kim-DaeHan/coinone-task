@@ -10,9 +10,8 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('CoinOne')
-    .setDescription('The CoinOne API description')
+    .setDescription('The CoinOne task API')
     .setVersion('1.0')
-    .addTag('CoinOne')
     .build();
 
   app.enableCors();
@@ -26,6 +25,7 @@ async function bootstrap() {
 
   await app.listen(8080);
 
+  // Hot-Module Replacement
   if (module.hot) {
     module.hot.accept();
     module.hot.dispose(() => app.close());
