@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Logger, Injectable } from '@nestjs/common';
 import { userAgreeHistoryDtos, userBalanceHistoryDtos } from './data/user.data';
 import { RequestDto } from './dto/user.request.dto';
 import { ResponseDto } from './dto/user.response.dto';
@@ -6,16 +6,20 @@ import { ServiceException } from 'common/serviceException';
 
 @Injectable()
 export class UserService {
-  constructor() {}
+  private readonly logger = new Logger(UserService.name);
 
-  async getUserAgreeHistory(requestDto: RequestDto): Promise<ResponseDto> {
+  async getEventParticipantsList(requestDto: RequestDto): Promise<ResponseDto> {
+    this.logger.log('Entering getEventParticipantsList Service method');
+
     const { timestamp, balance, userId, limit, offset } = requestDto;
 
     if (!timestamp || !balance || isNaN(limit) || isNaN(offset)) {
+      this.logger.error('Invalid input parameters');
       throw new ServiceException(400, 'Invalid input parameters');
     }
 
     if (!userAgreeHistoryDtos.length || !userBalanceHistoryDtos.length) {
+      this.logger.error('Data not available or in the wrong format');
       throw new ServiceException(
         500,
         'Data not available or in the wrong format',
@@ -91,11 +95,13 @@ export class UserService {
 
     const modifiedRows = rows.slice(offset, offset + limit);
 
-    const response = {
+    const result = {
       count: modifiedRows.length,
       rows: modifiedRows,
     };
 
-    return response;
+    this.logger.log(`Returning response: ${JSON.stringify(result)}`);
+
+    return result;
   }
 }

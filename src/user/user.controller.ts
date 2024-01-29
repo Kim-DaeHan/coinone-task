@@ -3,6 +3,7 @@ import {
   Get,
   HttpException,
   InternalServerErrorException,
+  Logger,
   Query,
   ValidationPipe,
 } from '@nestjs/common';
@@ -10,35 +11,45 @@ import { UserService } from './user.service';
 import { ResponseDto } from './dto/user.response.dto';
 import { RequestDto } from './dto/user.request.dto';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-// import { userAgreeHistoryDtos, userBalanceHistoryDtos } from './data/user.data';
 import { ServiceException } from 'common/serviceException';
 
-@ApiTags('user')
+@ApiTags('event participant')
 @Controller({ path: 'user', version: '1' })
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  private readonly logger = new Logger(UserController.name);
+
   @Get('agreements')
-  @ApiOperation({ summary: 'Find All Users' })
+  @ApiOperation({
+    summary: 'Retrieve the participant list for the Coinone event',
+  })
   @ApiOkResponse({
-    description: 'Find All Users',
+    description: 'Retrieve the participant list for the Coinone event',
     type: ResponseDto,
     isArray: true,
   })
-  async getUserAgreeHistory(
+  async getEventParticipantsList(
     // transform: true => 자동으로 타입 변환, 초기 값 정상 작동
     @Query(new ValidationPipe({ transform: true })) requestDto: RequestDto,
   ): Promise<ResponseDto> {
     try {
-      const test = await this.userService.getUserAgreeHistory(requestDto);
-      return test;
+      this.logger.log('Entering getEventParticipantsList Controller method');
+      this.logger.log(
+        `Received request with query parameters: ${JSON.stringify(requestDto)}`,
+      );
+      const response =
+        await this.userService.getEventParticipantsList(requestDto);
+      return response;
     } catch (error) {
-      console.log('error in users find: ', error.message);
+      this.logger.error(`Error in getEventParticipantsList: ${error.message}`);
       if (!(error instanceof ServiceException)) {
         throw new InternalServerErrorException(error.message);
       } else {
         throw new HttpException(error.message, error.errorCode);
       }
+    } finally {
+      this.logger.log('Request completed for getEventParticipantsList');
     }
   }
 }
