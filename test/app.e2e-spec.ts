@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
+import { ResponseDto } from 'src/user/dto/user.response.dto';
+import { RequestDto } from 'src/user/dto/user.request.dto';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -15,10 +17,34 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  it('/user/agreements (GET)', () => {
+    const queryParameters: RequestDto = {
+      timestamp: 1704067201,
+      balance: '300000',
+      userId: null,
+      limit: 5,
+      offset: 0,
+    };
+
+    const expectedResult: ResponseDto = {
+      count: 1,
+      rows: [
+        {
+          userId: 'USER_I',
+          isAgree: true,
+          balance: '608900',
+          createdAt: 1704067213,
+        },
+      ],
+    };
+
     return request(app.getHttpServer())
-      .get('/')
+      .get('/user/agreements')
+      .query(queryParameters)
       .expect(200)
-      .expect('Hello World!');
+      .expect((response) => {
+        expect(response.body).toBeDefined();
+        expect(response.body).toEqual(expectedResult);
+      });
   });
 });
