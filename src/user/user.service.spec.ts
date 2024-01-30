@@ -37,10 +37,6 @@ describe('UserService', () => {
         ],
       };
 
-      jest
-        .spyOn(service, 'getEventParticipantsList')
-        .mockResolvedValue(expectedResult);
-
       const result = await service.getEventParticipantsList(requestDto);
 
       expect(result).toBeDefined();

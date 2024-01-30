@@ -42,10 +42,6 @@ describe('UserController', () => {
         ],
       };
 
-      jest
-        .spyOn(service, 'getEventParticipantsList')
-        .mockResolvedValue(expectedResult);
-
       const result = await controller.getEventParticipantsList(requestDto);
 
       expect(result).toEqual(expectedResult);
